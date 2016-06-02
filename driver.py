@@ -67,7 +67,7 @@ def shift(output):
 	GPIO.output(clockPin, False)
 	GPIO.output(dataPin, False)
 
-# laches (activates) the data from memory to the outputs
+# latches (activates) the data from memory to the outputs
 def latch():
 	GPIO.output(latchPin, True)
 	time.sleep(0.01)
