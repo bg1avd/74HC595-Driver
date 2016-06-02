@@ -1,7 +1,6 @@
 import RPi.GPIO as GPIO
 import time
 
-
 # setup pins
 dataPin = 11
 clockPin = 15
@@ -9,13 +8,25 @@ latchPin = 13
 clearPin = 22
 oePin = 24
 
-# number of outputs in use
-outputCount = 4
+# default number of outputs in use
+outputCount = 8
 
-def setup():
+# store the current states in memory (used when doing changes to specific output)
+currentStates = []
+
+# sets the output count, the script will update only this many outputs (starting from the beginning A)
+def setOutputCount(count):
+	outputCount = count
+	currenStates = []
+	for x in range(0,outputCount):
+		currentStates.append(False)
+
+def setup(oc):
+	setOutputCount(oc)
+	
 	# set GPIO to the right mode
 	GPIO.setmode(GPIO.BOARD)
-
+	
 	# setup pins to be outputs
 	GPIO.setup(dataPin, GPIO.OUT)
 	GPIO.setup(clockPin, GPIO.OUT)
@@ -31,6 +42,9 @@ def setup():
 	GPIO.output(clearPin, True) # active low
 	GPIO.output(oePin, False) # active low
 
+
+## Low level functionality ##
+
 def cleanup():
 	# clear the outputs
 	resetLow()
@@ -41,8 +55,8 @@ def cleanup():
 
 def resetLow():
 	# set all outputs low
-	for x in range(0,8):
-		shift(False)
+	for x in range(0,outputCount):
+	        shift(False)
 	latch()
 
 # shifts data to the register
@@ -53,7 +67,7 @@ def shift(output):
 	GPIO.output(clockPin, False)
 	GPIO.output(dataPin, False)
 
-# laches (activates) the data from memory to the outputs	
+# laches (activates) the data from memory to the outputs
 def latch():
 	GPIO.output(latchPin, True)
 	time.sleep(0.01)
@@ -61,19 +75,18 @@ def latch():
 
 
 
-# testing...
-setup()
-try:
-	while(True):
-		for x in range(0,4):
-			shift(True)
-			latch()
-			time.sleep(0.1)
-		for x in range(0,4):
-			shift(False)
-			latch()
-			time.sleep(0.1)
-except (KeyboardInterrupt):
-	print 'Shutting down systems...'
-finally:
-	cleanup()
+## Higher level stuff ##
+
+# sets the outputs from the currentStates array
+def updateFromMemory():
+	for x in range(0,outputCount):
+	        shift(currentStates[outputCount - x - 1])
+	latch()
+
+# sets output of a specific pin
+def setOutput(outputNumber, high):
+	# changes the pins state in memory
+	currentStates[outputNumber] = high
+	# updates the states from memory to the shift register
+	updateFromMemory()
+
