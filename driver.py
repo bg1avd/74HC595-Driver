@@ -16,6 +16,7 @@ currentStates = []
 
 # sets the output count, the script will update only this many outputs (starting from the beginning A)
 def setOutputCount(count):
+        global outputCount
 	outputCount = count
 	currenStates = []
 	for x in range(0,outputCount):
@@ -85,6 +86,10 @@ def updateFromMemory():
 
 # sets output of a specific pin
 def setOutput(outputNumber, high):
+	global outputCount
+	if outputNumber >= outputCount:
+	        raise ValueError("Driver is setup to only handle outputs 0-%s" % (outputCount - 1))
+
 	# changes the pins state in memory
 	currentStates[outputNumber] = high
 	# updates the states from memory to the shift register
